@@ -20,16 +20,30 @@ function Scene() {
       for (let row = -1; row <= 1; row++) {
         for (let col = -1; col <= 1; col++) {
           const position = [col + colOffset, row + rowOffset, layer];
+          const faceColors = colors.slice();
 
-          newCubeLayout.push({ position, id: id++ });
+          newCubeLayout.push({ position, faceColors, id: id++ });
         }
       }
     }
     setCubeLayout(newCubeLayout);
   }, [rowOffset, colOffset]);
 
-  const handleCubeClick = (position, faceColors) => {
-    setSelectedCube({ position, faceColors });
+  const handleCubeClick = (position, faceColors, id, clickedSide) => {
+    if (selectedCube === id) {
+      setSelectedCube(null);
+    } else {
+      setSelectedCube({ position, faceColors, id, clickedSide });
+    }
+  };
+
+  const updateGroupAndAxis = (id, newAxis, sign) => {
+    setGroupToRotate((prevState) => ({
+      ...prevState,
+      group: [...prevState.group, id],
+      axis: newAxis,
+      sign,
+    }));
   };
 
   useEffect(() => {
@@ -46,9 +60,8 @@ function Scene() {
         case 87:
           // w - rotate the right face up
           newCubeLayout = cubeLayout.map((cube) => {
-            const { position } = cube;
+            const { position, faceColors } = cube;
             const [x, y, z] = position;
-
             let newX = x;
             let newY = y;
             let newZ = z;
@@ -59,44 +72,43 @@ function Scene() {
                 case '1,1':
                   newY = 1;
                   newZ = -1;
-                  // setGroupToRotate((oldArray) => [...oldArray, cube.id]);
-                  // setGroupToRotate({ group: [...groupToRotate.group, cube.id] });
-                  setGroupToRotate((prev) => ({ ...prev, group: [...prev.group, cube.id], axis: 'x' }));
+
+                  updateGroupAndAxis(cube.id, 'x', false);
                   break;
                 case '1,-1':
                   newY = -1;
                   newZ = -1;
-                  setGroupToRotate((prev) => ({ ...prev, group: [...prev.group, cube.id], axis: 'x' }));
+                  updateGroupAndAxis(cube.id, 'x', false);
                   break;
                 case '-1,-1':
                   newY = -1;
                   newZ = 1;
-                  setGroupToRotate((prev) => ({ ...prev, group: [...prev.group, cube.id], axis: 'x' }));
+                  updateGroupAndAxis(cube.id, 'x', false);
                   break;
                 case '-1,1':
                   newY = 1;
                   newZ = 1;
-                  setGroupToRotate((prev) => ({ ...prev, group: [...prev.group, cube.id], axis: 'x' }));
+                  updateGroupAndAxis(cube.id, 'x', false);
                   break;
                 case '0,1':
                   newY = 1;
                   newZ = 0;
-                  setGroupToRotate((prev) => ({ ...prev, group: [...prev.group, cube.id], axis: 'x' }));
+                  updateGroupAndAxis(cube.id, 'x', false);
                   break;
                 case '1,0':
                   newY = 0;
                   newZ = -1;
-                  setGroupToRotate((prev) => ({ ...prev, group: [...prev.group, cube.id], axis: 'x' }));
+                  updateGroupAndAxis(cube.id, 'x', false);
                   break;
                 case '0,-1':
                   newY = -1;
                   newZ = 0;
-                  setGroupToRotate((prev) => ({ ...prev, group: [...prev.group, cube.id], axis: 'x' }));
+                  updateGroupAndAxis(cube.id, 'x', false);
                   break;
                 case '-1,0':
                   newY = 0;
                   newZ = 1;
-                  setGroupToRotate((prev) => ({ ...prev, group: [...prev.group, cube.id], axis: 'x' }));
+                  updateGroupAndAxis(cube.id, 'x', false);
                 default:
                   break;
               }
@@ -113,12 +125,12 @@ function Scene() {
           return;
       }
       setCubeLayout(newCubeLayout);
-      setGroupToRotate((prev) => ({ ...prev, group: [], axis: '' }));
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
+      // setGroupToRotate((prev) => ({ ...prev, group: [], axis: '' }));
     };
   }, [selectedCube, cubeLayout]);
 
@@ -131,7 +143,7 @@ function Scene() {
         <button onClick={() => setColOffset(colOffset + 1)}>&gt;</button>
       </div>
       <Canvas>
-        <OrbitControls />
+        <OrbitControls enableZoom={false} />
         {cubeLayout.map((cube, index) => (
           <Cube
             key={cube.id}
@@ -139,8 +151,9 @@ function Scene() {
             position={cube.position}
             colors={colors}
             faceColors={cube.faceColors}
-            isSelected={selectedCube}
+            selectedCube={selectedCube}
             groupToRotate={groupToRotate}
+            setGroupToRotate={setGroupToRotate}
             onClick={handleCubeClick}
           />
         ))}
