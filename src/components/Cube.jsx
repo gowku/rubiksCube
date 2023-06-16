@@ -1,10 +1,21 @@
+import { useThree } from '@react-three/fiber';
 import { useRef, useState, useEffect } from 'react';
-import { BoxGeometry, EdgesGeometry, LineBasicMaterial, LineSegments, MeshBasicMaterial } from 'three';
+import * as THREE from 'three';
+import {
+  BoxGeometry,
+  EdgesGeometry,
+  LineBasicMaterial,
+  LineSegments,
+  MeshBasicMaterial,
+  Raycaster,
+  Vector2,
+} from 'three';
 
-const Cube = ({ id, position, colors, selectedCube, onClick, groupToRotate, setGroupToRotate }) => {
+const Cube = ({ id, position, colors, selectedCube, setSelectedCube, groupToRotate, setGroupToRotate }) => {
   const [isVisible, setIsVisible] = useState(true);
   const [faceColors, setFaceColors] = useState([]);
   const faceNames = ['Front', 'Back', 'Top', 'Bottom', 'Left', 'Right']; // Array of face names
+  const rubiksCubeFaces = ['front', 'back', 'top', 'bottom', 'left', 'right']; // Array of face names
 
   useEffect(() => {
     const determineFaceColors = () => {
@@ -14,7 +25,7 @@ const Cube = ({ id, position, colors, selectedCube, onClick, groupToRotate, setG
     };
 
     determineFaceColors();
-  }, [colors]);
+  }, []);
 
   const cubeRef = useRef(null);
   const cubeGeometry = new BoxGeometry(1, 1, 1);
@@ -24,37 +35,38 @@ const Cube = ({ id, position, colors, selectedCube, onClick, groupToRotate, setG
     return material;
   });
   const cubeMaterialTransparent = new MeshBasicMaterial({ opacity: 0.5, transparent: true });
-
   const edgesGeometry = new EdgesGeometry(cubeGeometry);
   const edgesMaterial = new LineBasicMaterial({ color: 'black' });
   const edges = new LineSegments(edgesGeometry, edgesMaterial);
 
+  // const camera = useThree((state) => state.camera);
+  // const { camera } = useThree();
+  // const aaa = useThree((state) => state);
+  // console.log(aaa);
+  // const scene = useThree((state) => state.scene);
+  // const { scene } = useThree();
+
   const clickHandler = (e) => {
     e.stopPropagation();
-    console.log(getClickedSide(e));
-    const clickedSide = getClickedSide(e);
-    onClick(position, colors, id, clickedSide);
-  };
+    setSelectedCube({ position, colors, id, uuid: cubeRef.current.uuid });
 
-  const getClickedSide = (e) => {
-    const canvas = document.querySelector('canvas');
-    const boundingRect = canvas.getBoundingClientRect();
-    const { width, height, left, top } = boundingRect;
-    const { clientX, clientY } = e;
-    const offsetX = clientX - left;
-    const offsetY = clientY - top;
-    const xRatio = offsetX / width;
-    const yRatio = offsetY / height;
+    // const raycaster = new THREE.Raycaster();
+    // const mouse = new THREE.Vector2();
 
-    if (xRatio > yRatio && xRatio > 1 - yRatio) {
-      return 'Right';
-    } else if (xRatio > yRatio && xRatio < 1 - yRatio) {
-      return 'Front';
-    } else if (xRatio < yRatio && xRatio > 1 - yRatio) {
-      return 'Back';
-    } else if (xRatio < yRatio && xRatio < 1 - yRatio) {
-      return 'Left';
-    }
+    // mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+    // mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+
+    // raycaster.setFromCamera(mouse, camera);
+    // // const intersects = raycaster.intersectObjects(cubeRef.current.children);
+    // // const intersects = raycaster.intersectObjects(scene.children, true);
+    // const intersects = raycaster.intersectObjects(e.object, true);
+    // console.log(intersects);
+
+    // for (let i = 0; i < intersects.length; i++) {
+    //   console.log(intersects[i]);
+    //   if (intersects[i].faceIndex !== null) {
+    //   }
+    // }
   };
 
   const pointerDownHandler = (e) => {
@@ -62,22 +74,18 @@ const Cube = ({ id, position, colors, selectedCube, onClick, groupToRotate, setG
   };
 
   useEffect(() => {
-    setIsVisible(selectedCube?.id !== id);
-    // console.log(selectedCube);
-
-    // if (selectedCube?.id === id) {
-    //   console.log(cubeRef.current);
-    // }
-  }, [selectedCube, id]);
+    // selectedCube?.uuid !== cubeRef.current.uuid ? setIsVisible(true) : setIsVisible(false);
+    setIsVisible(selectedCube?.uuid !== cubeRef.current.uuid);
+    // console.log(cubeRef.current);
+  }, [selectedCube]);
 
   useEffect(() => {
-    // console.log(groupToRotate);
     if (groupToRotate.group.includes(id)) {
       const rotationAngle = ((groupToRotate.sign ? 1 : -1) * Math.PI) / 2; // 90 degrees in radians
 
       switch (groupToRotate.axis) {
         case 'x':
-          cubeRef.current.rotation.x += rotationAngle;
+          // cubeRef.current.rotation.x += rotationAngle;
           break;
         case 'y':
           cubeRef.current.rotation.y += rotationAngle;
@@ -97,6 +105,7 @@ const Cube = ({ id, position, colors, selectedCube, onClick, groupToRotate, setG
       <mesh
         geometry={cubeGeometry}
         material={isVisible ? cubeMaterials : cubeMaterialTransparent}
+        // material={cubeMaterials}
         onClick={clickHandler}
         onPointerDown={pointerDownHandler}
       />

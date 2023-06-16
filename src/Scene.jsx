@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Canvas } from '@react-three/fiber';
-import { OrbitControls } from '@react-three/drei';
+import { Canvas, useThree } from '@react-three/fiber';
+import { OrbitControls, PerspectiveCamera } from '@react-three/drei';
 import Cube from './components/Cube';
 import './Scene.css';
 
@@ -10,7 +10,13 @@ function Scene() {
   const [groupToRotate, setGroupToRotate] = useState({ group: [], axis: '', sign: true });
   const [selectedCube, setSelectedCube] = useState();
   const [cubeLayout, setCubeLayout] = useState([]);
-
+  const configCamera = (state) => {
+    state.camera.position.set(0, 0, 10);
+    state.camera.fov = 75;
+    state.camera.aspect = window.innerWidth / window.innerHeight;
+    state.camera.near = 0.1;
+    state.camera.far = 1000;
+  };
   const colors = ['red', 'green', 'blue', 'yellow', 'orange', 'white'];
 
   useEffect(() => {
@@ -29,14 +35,6 @@ function Scene() {
     setCubeLayout(newCubeLayout);
   }, [rowOffset, colOffset]);
 
-  const handleCubeClick = (position, faceColors, id, clickedSide) => {
-    if (selectedCube === id) {
-      setSelectedCube(null);
-    } else {
-      setSelectedCube({ position, faceColors, id, clickedSide });
-    }
-  };
-
   const updateGroupAndAxis = (id, newAxis, sign) => {
     setGroupToRotate((prevState) => ({
       ...prevState,
@@ -47,90 +45,293 @@ function Scene() {
   };
 
   useEffect(() => {
+    console.log(selectedCube);
+  }, [selectedCube]);
+
+  useEffect(() => {
+    // console.log(selectedCube);
+    // const handleKeyDown = (event) => {
+    //   event.stopPropagation();
+
+    //   if (!selectedCube) return;
+    //   const { keyCode } = event;
+    //   console.log(keyCode);
+    //   let newCubeLayout = [];
+
+    //   switch (keyCode) {
+    //     case 87:
+    //       // w - rotate the right face up
+    //       newCubeLayout = cubeLayout.map((cube) => {
+    //         // console.log(cube);
+    //         const { position } = cube;
+    //         const [x, y, z] = position;
+    //         let newX = x;
+    //         let newY = y;
+    //         let newZ = z;
+
+    //         if (x === selectedCube.position[0]) {
+    //           // Top face rotation
+    //           switch (`${y},${z}`) {
+    //             case '1,1':
+    //               newY = 1;
+    //               newZ = -1;
+
+    //               updateGroupAndAxis(cube.id, 'x', false);
+    //               break;
+    //             case '1,-1':
+    //               newY = -1;
+    //               newZ = -1;
+    //               updateGroupAndAxis(cube.id, 'x', false);
+    //               break;
+    //             case '-1,-1':
+    //               newY = -1;
+    //               newZ = 1;
+    //               updateGroupAndAxis(cube.id, 'x', false);
+    //               break;
+    //             case '-1,1':
+    //               newY = 1;
+    //               newZ = 1;
+    //               updateGroupAndAxis(cube.id, 'x', false);
+    //               break;
+    //             case '0,1':
+    //               newY = 1;
+    //               newZ = 0;
+    //               updateGroupAndAxis(cube.id, 'x', false);
+    //               break;
+    //             case '1,0':
+    //               newY = 0;
+    //               newZ = -1;
+    //               updateGroupAndAxis(cube.id, 'x', false);
+    //               break;
+    //             case '0,-1':
+    //               newY = -1;
+    //               newZ = 0;
+    //               updateGroupAndAxis(cube.id, 'x', false);
+    //               break;
+    //             case '-1,0':
+    //               newY = 0;
+    //               newZ = 1;
+    //               updateGroupAndAxis(cube.id, 'x', false);
+    //             default:
+    //               break;
+    //           }
+    //         }
+
+    //         return { ...cube, position: [newX, newY, newZ] };
+    //       });
+    //       break;
+    //     case 65:
+    //       // a - rotate the right face left
+    //       newCubeLayout = cubeLayout.map((cube) => {
+    //         const { position } = cube;
+    //         const [x, y, z] = position;
+    //         let newX = x;
+    //         let newY = y;
+    //         let newZ = z;
+
+    //         if (y === selectedCube.position[1]) {
+    //           // Top face rotation
+    //           switch (`${x},${z}`) {
+    //             case '-1,1':
+    //               newX = -1;
+    //               newZ = -1;
+    //               updateGroupAndAxis(cube.id, 'y', false);
+    //               break;
+    //             case '-1,-1':
+    //               newX = 1;
+    //               newZ = -1;
+    //               updateGroupAndAxis(cube.id, 'y', false);
+    //               break;
+    //             case '1,-1':
+    //               newX = 1;
+    //               newZ = 1;
+    //               updateGroupAndAxis(cube.id, 'y', false);
+    //               break;
+    //             case '1,1':
+    //               newX = -1;
+    //               newZ = 1;
+    //               updateGroupAndAxis(cube.id, 'y', false);
+    //               break;
+    //             case '0,1':
+    //               newX = -1;
+    //               newZ = 0;
+    //               updateGroupAndAxis(cube.id, 'y', false);
+    //               break;
+    //             case '-1,0':
+    //               newX = 0;
+    //               newZ = -1;
+    //               updateGroupAndAxis(cube.id, 'y', false);
+    //               break;
+    //             case '0,-1':
+    //               newX = 1;
+    //               newZ = 0;
+    //               updateGroupAndAxis(cube.id, 'y', false);
+    //               break;
+    //             case '1,0':
+    //               newX = 0;
+    //               newZ = 1;
+    //               updateGroupAndAxis(cube.id, 'y', false);
+    //             default:
+    //               break;
+    //           }
+    //         }
+
+    //         return { ...cube, position: [newX, newY, newZ] };
+    //       });
+
+    //     // case 83:
+    //     // case 68:
+
+    //     default:
+    //       return;
+    //   }
+    //   setCubeLayout(newCubeLayout);
+    // };
+
     const handleKeyDown = (event) => {
       event.stopPropagation();
 
       if (!selectedCube) return;
       const { keyCode } = event;
-
-      let newCubeLayout = [];
-      // let groupToRotate = [];
+      console.log(keyCode);
 
       switch (keyCode) {
         case 87:
           // w - rotate the right face up
-          newCubeLayout = cubeLayout.map((cube) => {
-            const { position, faceColors } = cube;
-            const [x, y, z] = position;
-            let newX = x;
-            let newY = y;
-            let newZ = z;
+          setCubeLayout((prevCubeLayout) => {
+            const newCubeLayout = prevCubeLayout.map((cube) => {
+              const { position } = cube;
+              const [x, y, z] = position;
+              let newX = x;
+              let newY = y;
+              let newZ = z;
 
-            if (x === selectedCube.position[0]) {
-              // Top face rotation
-              switch (`${y},${z}`) {
-                case '1,1':
-                  newY = 1;
-                  newZ = -1;
-
-                  updateGroupAndAxis(cube.id, 'x', false);
-                  break;
-                case '1,-1':
-                  newY = -1;
-                  newZ = -1;
-                  updateGroupAndAxis(cube.id, 'x', false);
-                  break;
-                case '-1,-1':
-                  newY = -1;
-                  newZ = 1;
-                  updateGroupAndAxis(cube.id, 'x', false);
-                  break;
-                case '-1,1':
-                  newY = 1;
-                  newZ = 1;
-                  updateGroupAndAxis(cube.id, 'x', false);
-                  break;
-                case '0,1':
-                  newY = 1;
-                  newZ = 0;
-                  updateGroupAndAxis(cube.id, 'x', false);
-                  break;
-                case '1,0':
-                  newY = 0;
-                  newZ = -1;
-                  updateGroupAndAxis(cube.id, 'x', false);
-                  break;
-                case '0,-1':
-                  newY = -1;
-                  newZ = 0;
-                  updateGroupAndAxis(cube.id, 'x', false);
-                  break;
-                case '-1,0':
-                  newY = 0;
-                  newZ = 1;
-                  updateGroupAndAxis(cube.id, 'x', false);
-                default:
-                  break;
+              if (x === selectedCube.position[0]) {
+                // Top face rotation
+                switch (`${y},${z}`) {
+                  case '1,1':
+                    newY = 1;
+                    newZ = -1;
+                    updateGroupAndAxis(cube.id, 'x', false);
+                    break;
+                  case '1,-1':
+                    newY = -1;
+                    newZ = -1;
+                    updateGroupAndAxis(cube.id, 'x', false);
+                    break;
+                  case '-1,-1':
+                    newY = -1;
+                    newZ = 1;
+                    updateGroupAndAxis(cube.id, 'x', false);
+                    break;
+                  case '-1,1':
+                    newY = 1;
+                    newZ = 1;
+                    updateGroupAndAxis(cube.id, 'x', false);
+                    break;
+                  case '0,1':
+                    newY = 1;
+                    newZ = 0;
+                    updateGroupAndAxis(cube.id, 'x', false);
+                    break;
+                  case '1,0':
+                    newY = 0;
+                    newZ = -1;
+                    updateGroupAndAxis(cube.id, 'x', false);
+                    break;
+                  case '0,-1':
+                    newY = -1;
+                    newZ = 0;
+                    updateGroupAndAxis(cube.id, 'x', false);
+                    break;
+                  case '-1,0':
+                    newY = 0;
+                    newZ = 1;
+                    updateGroupAndAxis(cube.id, 'x', false);
+                    break;
+                  default:
+                    break;
+                }
               }
-            }
 
-            return { ...cube, position: [newX, newY, newZ] };
+              return { ...cube, position: [newX, newY, newZ] };
+            });
+
+            return newCubeLayout;
           });
           break;
-        // case 65:
-        // case 83:
-        // case 68:
+        case 65:
+          // a - rotate the right face left
+          setCubeLayout((prevCubeLayout) => {
+            const newCubeLayout = prevCubeLayout.map((cube) => {
+              const { position } = cube;
+              const [x, y, z] = position;
+              let newX = x;
+              let newY = y;
+              let newZ = z;
 
+              if (y === selectedCube.position[1]) {
+                // Top face rotation
+                switch (`${x},${z}`) {
+                  case '-1,1':
+                    newX = -1;
+                    newZ = -1;
+                    updateGroupAndAxis(cube.id, 'y', true);
+                    break;
+                  case '-1,-1':
+                    newX = 1;
+                    newZ = -1;
+                    updateGroupAndAxis(cube.id, 'y', true);
+                    break;
+                  case '1,-1':
+                    newX = 1;
+                    newZ = 1;
+                    updateGroupAndAxis(cube.id, 'y', true);
+                    break;
+                  case '1,1':
+                    newX = -1;
+                    newZ = 1;
+                    updateGroupAndAxis(cube.id, 'y', true);
+                    break;
+                  case '0,1':
+                    newX = -1;
+                    newZ = 0;
+                    updateGroupAndAxis(cube.id, 'y', true);
+                    break;
+                  case '-1,0':
+                    newX = 0;
+                    newZ = -1;
+                    updateGroupAndAxis(cube.id, 'y', true);
+                    break;
+                  case '0,-1':
+                    newX = 1;
+                    newZ = 0;
+                    updateGroupAndAxis(cube.id, 'y', true);
+                    break;
+                  case '1,0':
+                    newX = 0;
+                    newZ = 1;
+                    updateGroupAndAxis(cube.id, 'y', true);
+                    break;
+                  default:
+                    break;
+                }
+              }
+
+              return { ...cube, position: [newX, newY, newZ] };
+            });
+
+            return newCubeLayout;
+          });
+          break;
         default:
           return;
       }
-      setCubeLayout(newCubeLayout);
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
-      // setGroupToRotate((prev) => ({ ...prev, group: [], axis: '' }));
     };
   }, [selectedCube, cubeLayout]);
 
@@ -142,9 +343,10 @@ function Scene() {
         <button onClick={() => setColOffset(colOffset - 1)}>&lt;</button>
         <button onClick={() => setColOffset(colOffset + 1)}>&gt;</button>
       </div>
-      <Canvas>
+      <Canvas onCreated={configCamera}>
         <OrbitControls enableZoom={false} />
-        {cubeLayout.map((cube, index) => (
+        <PerspectiveCamera makeDefault {...configCamera} />
+        {cubeLayout.map((cube) => (
           <Cube
             key={cube.id}
             id={cube.id}
@@ -152,9 +354,9 @@ function Scene() {
             colors={colors}
             faceColors={cube.faceColors}
             selectedCube={selectedCube}
+            setSelectedCube={setSelectedCube}
             groupToRotate={groupToRotate}
             setGroupToRotate={setGroupToRotate}
-            onClick={handleCubeClick}
           />
         ))}
       </Canvas>

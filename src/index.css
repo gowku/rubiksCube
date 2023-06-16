@@ -4,10 +4,15 @@ html {
   background-color: #0c4a6e;
 }
 
-#root {
+body {
   width: 100%;
   height: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+#root {
+  width: 1000px;
+  height: 1000px;
 }
